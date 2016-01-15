@@ -1,0 +1,230 @@
+<MvFUNCTION NAME = "Module_Description" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "html" ERROROUTPUTLEVEL = "runtime">
+	<MvASSIGN NAME = "l.module:code"		VALUE = "nexmosms">
+	<MvASSIGN NAME = "l.module:name"		VALUE = "Miva Merchant with Nexmo SMS">
+	<MvASSIGN NAME = "l.module:provider"	VALUE = "Nexmo">
+	<MvASSIGN NAME = "l.module:version"		VALUE = "1.0">
+	<MvASSIGN NAME = "l.module:api_ver"		VALUE = "1.0">
+	<MvASSIGN NAME = "l.module:description"	VALUE = "Send SMS when order is placed">
+	<MvASSIGN NAME = "l.module:features"	VALUE = "fulfill, vis_fulfill, data_store, not_order">
+</MvFUNCTION>
+
+<MvASSIGN NAME = "g.data" VALUE = "{ 'simple_db' }">
+
+<MvIF EXPRESSION = "{NOT g.action}">
+	<MvASSIGN NAME = "g.action" VALUE = "{ 'main' }">
+</MvIF>
+
+<MvFUNCTION NAME = "main" PARAMETERS = "">
+	<MvASSIGN NAME = "l.ok" VALUE = "{ 1 }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Install_Store" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "html" ERROROUTPUTLEVEL = "runtime">
+
+<MvQUERY NAME	= "Merchant"
+		 QUERY	= "{ 'CREATE TABLE ' $ g.Store_Table_Prefix $ 'NexmoSms
+					  (
+						id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ' AUTO_INCREMENT PRIMARY KEY ,
+						enable		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_BOOL()	$ ',
+						api_key		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 50 )		$ ',
+						api_secret	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 50 )		$ ',
+						amount		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 7,2 )		$ '							
+					  ) ' }">
+						  
+<MvIF EXPR = "{ g.MvQUERY_Error }">
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'MER-FUF-TOE-00001', g.MvQUERY_Error ) }">
+</MvIF>						  
+						  
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Upgrade_Store" PARAMETERS = "module var, version" STANDARDOUTPUTLEVEL = "html" ERROROUTPUTLEVEL = "runtime">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Uninstall_Store" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "html" ERROROUTPUTLEVEL = "runtime">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DROP TABLE ' $ g.Store_Table_Prefix $ 'NexmoSms' }">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "FulfillmentModule_ProcessOrder" PARAMETERS = "module var, order var" STANDARDOUTPUTLEVEL = "">	
+	<MvASSIGN NAME="g.result" VALUE="{ Call_Api(l.order, '') }">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Notify_Order_StatusChange" PARAMETERS = "module var, original_status, order var" STANDARDOUTPUTLEVEL = "">		
+		<MvASSIGN NAME="g.result" VALUE="{ Call_Api(l.order, l.original_status) }">			
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+| Fulfillment Feature (vis_fulfill)
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_Fulfillment_Validate" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+
+<MvASSIGN NAME = "g.api_key" VALUE = "{ trim( g.api_key ) }">
+<MvASSIGN NAME = "g.api_secret" VALUE = "{ trim( g.api_secret ) }">
+<MvASSIGN NAME = "g.amount" VALUE = "{ trim( g.amount ) }">
+
+<MvIF EXPR = "{NOT g.api_key OR NOT g.api_secret OR NOT g.amount}">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Admin ].FieldError( 'NSMS', 'api_key', 'Please enter values in required fields.' ) }">
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Fulfillment_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvCOMMENT>
+	<MvIF EXPR = "{NOT g.api_key OR NOT g.api_secret OR NOT g.amount}">		
+		<MvEVAL EXPR="{ '<b>Please enter values in required fields.</b>' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	</MvCOMMENT>
+	<MvQUERY NAME	= "Merchant"
+		 QUERY	= "{ 'Delete from ' $ g.Store_Table_Prefix $ 'NexmoSms ' }">
+								
+	<MvQUERY NAME	= "Merchant"
+		 QUERY	= "{ 'Insert into ' $ g.Store_Table_Prefix $ 'NexmoSms (enable, api_key, api_secret, amount) values ("' $ g.enable $ '", "' $ g.api_key $ '", "' $ g.api_secret $ '", "' $ g.amount $ '") ' }">
+						
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'MER-FUF-TOE-00001', g.MvQUERY_Error ) }">
+	</MvIF>
+	<MvEVAL EXPR="{ '<b>Record Saved</b>' }">
+	
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Fulfillment_Head" PARAMETERS = "module var, tab" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Fulfillment_Content" PARAMETERS = "module var, tab, load_fields" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvIF EXPR = "{ l.tab NE 'NSMS' }">
+		<MvFUNCTIONRETURN VALUE = 1>
+	</MvIF>	
+	
+	<MIVA STANDARDOUTPUTLEVEL="html, text, compresswhitespace">	
+	<style type="text/css">
+	#mm9_batchlist_nexmosms input[type=text]{
+	                border:1px solid #ccc;
+	                height:26px;
+	                width:90%;
+					padding: 0 5px;
+	}
+	
+	#mm9_batchlist_nexmosms label{
+		margin-bottom:6px; font-size:16px; padding:0 10px 0 0
+	}
+	
+	p.small {font-size:13px;}
+	</style>
+	
+	<div id="mm9_batchlist_nexmosms">
+	
+<MvASSIGN NAME = 'l.query' VALUE = "{'SELECT * FROM ' $ g.Store_Table_Prefix $ 'NexmoSms order by id desc limit 1'}" >	
+<MvOPENVIEW NAME = "Merchant" VIEW = "NexmoSms" QUERY = "{l.query}" > 
+
+<h2 style="color:#2ebbcd;"><MvEVAL EXPR="{ 'Configuration Settings' }"></h2>
+<p class="small">All fields marked with * are mandatory</p>
+<hr>
+		<table>
+			<tr><td><label><MvEVAL EXPR="{ 'Nexmo Key *' }"> </label></td><td><input type="text" name="api_key" value="{ NexmoSms.d.api_key }" size="32"></td></tr>
+			<tr><td> <label><MvEVAL EXPR="{ 'Nexmo Secret *' }"></label></td><td><input type="text" name="api_secret" value="{ NexmoSms.d.api_secret }" size="32"></td></tr>
+			<tr><td> <label><MvEVAL EXPR="{ 'Order Threshold Amount *' }"> </label></td><td><input type="text" name="amount" value="{ NexmoSms.d.amount }" size="32"></td></tr>
+			<MvIF EXPR = "{ NexmoSms.d.enable EQ 1 }"> 
+				<tr><td> <label><MvEVAL EXPR="{ 'Enable SMS' }"> </label></td><td><input type="checkbox" name="enable" value="1" checked="checked" ></td></tr>
+			<MvELSE>	
+				<tr><td> <label><MvEVAL EXPR="{ 'Enable SMS' }"> </label></td><td><input type="checkbox" name="enable" value="1" ></td></tr>
+			</MvIF>						
+		</table>		
+	</div>
+		
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Fulfillment_Tabs" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = "NSMS:Nexmo Settings">
+</MvFUNCTION>
+
+<MvFUNCTION Name = "Call_Api" PARAMETERS = "order var, original_status" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+	<MvASSIGN NAME = 'l.query' VALUE = "{'SELECT * FROM ' $ g.Store_Table_Prefix $ 'NexmoSms order by id desc limit 1'}" >	
+	<MvOPENVIEW NAME = "Merchant" VIEW = "NexmoSms" QUERY = "{l.query}" >
+
+	<MvIF EXPR="{ NexmoSms.d.enable EQ 1 }">  	
+		<MvIF EXPR="{ l.order:total EQ NexmoSms.d.amount OR l.order:total GT NexmoSms.d.amount OR l.order:status EQ 300 }">   			
+
+		<MvASSIGN NAME=  "l.formatted_amount" VALUE="{ [ g.Module_Root $ g.Store:currncy_mod:module ].CurrencyModule_AddFormatting( g.Store:currncy_mod, l.order:total ) }">		
+		
+			<MvIF EXPR = "{ l.order:status EQ 0 OR l.order:status EQ 000 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'pending' }">
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, Thank you for placing Order#' $ l.order:id $ '. Your order is in ' $ l.status $ ' status.' }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'A new Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is placed with ' $ l.status $ ' status.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 1 OR l.order:status EQ 100 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'Processing' }">
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, Your Order#' $ l.order:id $ ' is being Processed.' }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is being Processed.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 2 OR l.order:status EQ 200 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'Shipped' }">
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, Your Order#' $ l.order:id $ ' is Shipped.' }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is Shipped.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 201 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'Partially Shipped' }">
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, Your Order#' $ l.order:id $ ' is Partially shipped.' }">	
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is Partially Shipped.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 3 OR l.order:status EQ 300 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'Cancelled' }">
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, Your Order#' $ l.order:id $ ' is Cancelled.' }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' is Cancelled.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 4 OR l.order:status EQ 400 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'Backordered' }">
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, Your Order#' $ l.order:id $ ' is Back Ordered.' }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is being Back Ordered.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 5 OR l.order:status EQ 500 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'RMA Issued' }">	
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, We are processing return request for your Order#'$ l.order:id }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is RMA Issued.' }">
+			<MvELSEIF EXPR="{ l.order:status EQ 6 OR l.order:status EQ 600 }">
+				<MvASSIGN NAME=  "l.status" VALUE="{ 'Returned' }">	
+				<MvASSIGN NAME = "l.sms" VALUE = "{ 'Dear Customer, We have received the returned product for your Order#' $ l.order:id }">
+				<MvASSIGN NAME = "l.store_sms" VALUE = "{ 'The Order#' $ l.order:id $ ' for amount ' $ l.formatted_amount $ ' is Returned.' }">
+			</MvIF>	
+						
+			<MvASSIGN NAME = "l.api_key" VALUE = "{ NexmoSms.d.api_key }">
+			<MvASSIGN NAME = "l.api_secret" VALUE = "{ NexmoSms.d.api_secret }">
+			<MvASSIGN NAME=  "l.sender" VALUE="{ Get_Sender() }">
+			<MvASSIGN NAME=  "l.to" VALUE="{ l.order:bill_phone }">
+			<MvASSIGN NAME = "l.store_phone" VALUE = "{ g.Store:phone }">
+						
+			<MvASSIGN NAME = 'l.url' VALUE = "{'https://rest.nexmo.com/sms/json?api_key=' $ l.api_key $ '&api_secret=' $ l.api_secret $ '&from=' $ l.sender $ '&to=' $ l.to $ '&text=' $ encodeattribute(l.sms)}" >	
+
+			<MvCALL ACTION="{ l.url }" METHOD="GET">					
+				<MvCALLSTOP>
+			</MvCALL>
+			
+			<MvASSIGN NAME = 'l.url2' VALUE = "{'https://rest.nexmo.com/sms/json?api_key=' $ l.api_key $ '&api_secret=' $ l.api_secret $ '&from=' $ l.sender $ '&to=' $ l.store_phone $ '&text=' $ encodeattribute(l.store_sms)}" >	
+
+			<MvCALL ACTION="{ l.url2 }" METHOD="GET">				
+				<MvCALLSTOP>
+			</MvCALL>			
+			
+		</MvIF>
+	</MvIF>
+	
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "NexmoSms">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION Name = "Get_Sender" PARAMETERS = "" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">	
+	<MvASSIGN NAME = 'l.query' VALUE = "{'SELECT * FROM ' $ g.Store_Table_Prefix $ 'NexmoSms order by id desc limit 1'}" >	
+	<MvOPENVIEW NAME = "Merchant" VIEW = "NexmoSms" QUERY = "{l.query}" >	
+		<MvASSIGN NAME = 'l.url' VALUE = "{'https://rest.nexmo.com/account/numbers?api_key='$ NexmoSms.d.api_key $'&api_secret='$ NexmoSms.d.api_secret}" >	
+		<MvCALL ACTION="{ l.url }" Method = 'GET'>
+			<MvASSIGN NAME = "l.return" VALUE = "{ s.callvalue }">
+			<MvASSIGN NAME = "l.output" VALUE = "{ miva_json_decode( l.return, l.return_array ) }">
+			<MvASSIGN NAME = "l.msisdn" VALUE = "{ l.return_array:numbers[1]:msisdn }">
+		</MvCALL>	
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "NexmoSms">	
+	<MvFUNCTIONRETURN VALUE = "{ l.msisdn }">
+</MvFUNCTION>
