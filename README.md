@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <img src="https://github.com/AdvaiyaLabs/Miva-Merchant-with-Nexmo-SMS/blob/master/Docs/image1.png" width=200>
 
 
@@ -120,3 +121,9 @@ Miva Merchant with Nexmo SMS app will allow Miva Merchant’s shop owners and cu
 -   Key and Secret will display in the top bar as shown in the below image:
 
 	<img src="https://github.com/AdvaiyaLabs/Miva-Merchant-with-Nexmo-SMS/blob/master/Docs/image11.png" width=600>
+=======
+# Miva-Merchant-with-Nexmo-SMS
+An app to send SMS to keep you updated about your Miva Merchant orders
+
+The user documentattion is in progress.
+>>>>>>> origin/master
