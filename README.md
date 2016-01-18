@@ -1,7 +1,8 @@
+#Miva Merchant with Nexmo SMS
+
 <img src="https://github.com/AdvaiyaLabs/Miva-Merchant-with-Nexmo-SMS/blob/master/Docs/image1.png" width=200>
 
-
-##Introduction 
+##Introduction
 
 Miva Merchant with Nexmo SMS app will allow Miva Merchant’s shop owners and customers to stay updated on the orders and their status via SMS. Miva Merchant is the leading provider of Enterprise-class ecommerce platforms. Over the past years, mobile has become one of the most impactful communication platforms due to its massive adoption rate. Thus, Short Messaging Service (SMS) becomes an effective communication channel to deliver business-critical information in short timeframe to respective team members. SMS empowers shop owners and their customers to stay updated with the orders that matter and allow them to proactively respond to customers. 
 
